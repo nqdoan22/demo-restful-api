@@ -22,8 +22,10 @@ public class ActorController {
     }
 
     @GetMapping("/{id}")
-    public Optional<Actor> findById(@PathVariable Integer id) {
-        return actorService.getActorById(id);
+    public ResponseEntity<Actor> findById(@PathVariable Integer id) {
+        Optional<Actor> actor = actorService.getActorById(id);
+        return actor.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -33,13 +35,13 @@ public class ActorController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteActor(@RequestParam Integer id) {
+    public ResponseEntity<Void> deleteActor(@PathVariable Integer id) {
         actorService.deleteActorById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Actor> updateActor(@RequestParam Integer id, @RequestBody Actor actor) {
+    public ResponseEntity<Actor> updateActor(@PathVariable Integer id, @RequestBody Actor actor) {
         Optional<Actor> updatedActor = actorService.updateActor(id, actor);
 
         return updatedActor
