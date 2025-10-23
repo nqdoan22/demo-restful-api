@@ -62,7 +62,6 @@ spring.jpa.show-sql=true
 ### Step 6: Controller Layer (ActorController.java)
 - Created REST controller with API endpoints
 - Handled HTTP methods: GET, POST, PUT, DELETE
-- Fixed parameter binding issues during testing
 
 ## Features Completed:  
 - View all actors
