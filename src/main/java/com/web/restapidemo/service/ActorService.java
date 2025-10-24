@@ -1,7 +1,7 @@
-package com.web.rest_api_demo.service;
+package com.web.restapidemo.service;
 
-import com.web.rest_api_demo.entity.Actor;
-import com.web.rest_api_demo.repository.ActorRepository;
+import com.web.restapidemo.entity.Actor;
+import com.web.restapidemo.repository.ActorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

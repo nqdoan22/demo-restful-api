@@ -1,4 +1,4 @@
-package com.web.rest_api_demo;
+package com.web.restapidemo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

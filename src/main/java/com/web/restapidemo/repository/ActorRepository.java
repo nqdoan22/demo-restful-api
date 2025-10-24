@@ -1,6 +1,6 @@
-package com.web.rest_api_demo.repository;
+package com.web.restapidemo.repository;
 
-import com.web.rest_api_demo.entity.Actor;
+import com.web.restapidemo.entity.Actor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ActorRepository extends JpaRepository<Actor, Integer> { }

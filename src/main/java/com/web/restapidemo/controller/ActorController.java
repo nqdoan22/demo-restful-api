@@ -1,7 +1,7 @@
-package com.web.rest_api_demo.controller;
+package com.web.restapidemo.controller;
 
-import com.web.rest_api_demo.entity.Actor;
-import com.web.rest_api_demo.service.ActorService;
+import com.web.restapidemo.entity.Actor;
+import com.web.restapidemo.service.ActorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
