@@ -2,23 +2,39 @@
 
 ## Project Overview
 
-This REST API Demo project manages the `film` table in the `sakila` database with validation (using **Jakarta Bean Validation**) and API documentation (using **OpenAPI 3 & Swagger**)  
+This REST API Demo project manages the `film` table in the `sakila` database with validation and api documentation
 
----
+## Technology Stack
+- **Java 21**
+- **Spring Boot 3.5.6**
+- **Spring Data JPA**
+- **MySQL Database**
+- **Jakarta Bean Validation**
+- **OpenAPI 3 + Swagger UI**
+- **Maven**
+- **Lombok**
 
-## 1. Database Setup - Sakila Films
+## Development Process
 
-The application connects to the MySQL `sakila` database and maps the `Film` entity to the `film` table.
+### 1. Add dependencies
 
-**Database Configuration (`application.properties`):**
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/sakila?useSSL=false&serverTimezone=UTC
-spring.datasource.username=root
-spring.datasource.password=root
-spring.jpa.hibernate.ddl-auto=update
+**Configuration file (`pom.xml`):**
+```xml
+<!--        For validation -->
+<dependency>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+
+<!--        For api documentation-->
+<dependency>
+<groupId>org.springdoc</groupId>
+<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+<version>2.8.8</version>
+</dependency>
 ```
 
-**Key Entity Fields:**
+### 2. Key Entity Fields (from database):
 - `filmId`: Unique identifier
 - `title`: Film title (required, max 255 chars)
 - `releaseYear`: Year (1901-2155)
@@ -28,15 +44,15 @@ spring.jpa.hibernate.ddl-auto=update
 
 ---
 
-## 2. Validation Client Parameters
+### 3. Validation Client Parameters
 
-### 2.1 Number of Fields
+#### 3.1 Number of Fields
 
 All required fields are validated using Jakarta Bean Validation annotations:
 - **Required fields:** `title`, `languageId`, `rentalDuration`, `rentalRate`, `replacementCost`
 - **Optional fields:** `description`, `releaseYear`, `length`, `rating`
 
-### 2.2 DataType Validation
+#### 3.2 DataType Validation
 
 Accurate mapping between Java types and MySQL types is maintained:
 
@@ -47,7 +63,7 @@ Accurate mapping between Java types and MySQL types is maintained:
 | BigDecimal | DECIMAL(4,2) |
 | LocalDateTime | DATETIME |
 
-### 2.3 Field Values Validation
+#### 3.3 Field Values Validation
 
 **Examples of validation rules:**
 
@@ -73,7 +89,7 @@ private String rating;
 private BigDecimal rentalRate;
 ```
 
-### 2.4 Error Handling
+#### 3.4 Error Handling
 
 Global exception handler catches validation errors and returns detailed messages:
 
@@ -85,11 +101,33 @@ Global exception handler catches validation errors and returns detailed messages
 }
 ```
 
----
+### 4. OpenAPI 3 + Swagger UI
 
-## 3. RESTful API Documentation (10+ APIs)
+#### Configuration
+- Title: Sakila Film Management API
+- Version: 1.0
+- Swagger UI URL: `http://localhost:8080/swagger-ui.html`
+- API Docs URL: `http://localhost:8080/api-docs`
 
-### API Endpoints Overview
+#### Features
+
+1. **Interactive API Testing:** Test all APIs directly in browser (similar to Postman)
+2. **API Descriptions:** Each endpoint has detailed descriptions with examples
+3. **Parameter Documentation:** All parameters documented with descriptions and examples
+4. **Sample Data:** Pre-filled example data for easy testing
+5. **Schema Documentation:** Complete data model documentation
+
+#### How to Use Swagger UI
+
+1. Start the application
+2. Navigate to `http://localhost:8080/swagger-ui.html`
+3. Expand any API endpoint
+4. Click "Try it out" button
+5. Fill parameters or use example data
+6. Click "Execute" to test
+7. View response with status code and data
+
+### 5. RESTful API Documentation (10+ APIs)
 
 #### Basic CRUD Operations:
 1. **GET** `/api/films` - Get all films
@@ -105,7 +143,7 @@ Global exception handler catches validation errors and returns detailed messages
 9. **GET** `/api/films/rental-range?minRate={min}&maxRate={max}` - Filter by price range
 10. **GET** `/api/films/long-films?minLength={length}` - Filter by film length
 
-### Sample Request & Response
+## Sample Request & Response
 
 **Create Film Request:**
 ```json
@@ -134,82 +172,24 @@ Global exception handler catches validation errors and returns detailed messages
 }
 ```
 
----
 
-## 4. OpenAPI 3 + Swagger UI
+## Key Features
+ 
+- **Validation:** Complete client parameter validation (number, datatype, field values)  
+- **10+ APIs:** Full CRUD operations plus search/filter capabilities  
+- **API Documentation:** Complete OpenAPI 3 specification with Swagger UI  
+- **Interactive Testing:** Built-in UI for testing APIs (similar to Postman)  
+- **Error Handling:** Global exception handler with detailed error messages  
+- **Sample Data:** Comprehensive examples for request and response
 
-### Configuration
-
-**Dependencies (`pom.xml`):**
-```xml
-<dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-    <version>2.8.8</version>
-</dependency>
-```
-
-**OpenAPI Configuration:**
-- Title: Sakila Film Management API
-- Version: 1.0
-- Swagger UI URL: `http://localhost:8080/swagger-ui.html`
-- API Docs URL: `http://localhost:8080/api-docs`
-
-### Features
-
-1. **Interactive API Testing:** Test all APIs directly in browser (similar to Postman)
-2. **API Descriptions:** Each endpoint has detailed descriptions with examples
-3. **Parameter Documentation:** All parameters documented with descriptions and examples
-4. **Sample Data:** Pre-filled example data for easy testing
-5. **Schema Documentation:** Complete data model documentation
-
-### How to Use Swagger UI
-
-1. Start the application
-2. Navigate to `http://localhost:8080/swagger-ui.html`
-3. Expand any API endpoint
-4. Click "Try it out" button
-5. Fill parameters or use example data
-6. Click "Execute" to test
-7. View response with status code and data
-
----
-
-## 5. Technology Stack
-
-- **Backend Framework:** Spring Boot 3.5.6
-- **Language:** Java 21
-- **ORM:** Spring Data JPA + Hibernate
-- **Database:** MySQL (Sakila database)
-- **Validation:** Jakarta Bean Validation
-- **Documentation:** OpenAPI 3 + Swagger UI
-- **Build Tool:** Maven
-- **Utilities:** Lombok
-
----
-
-## 6. Key Features
-
-✅ **Database Connection:** Successfully connected to Sakila database  
-✅ **Validation:** Complete client parameter validation (number, datatype, field values)  
-✅ **10+ APIs:** Full CRUD operations plus search/filter capabilities  
-✅ **API Documentation:** Complete OpenAPI 3 specification with Swagger UI  
-✅ **Interactive Testing:** Built-in UI for testing APIs (similar to Postman)  
-✅ **Error Handling:** Global exception handler with detailed error messages  
-✅ **Sample Data:** Comprehensive examples for request and response
-
----
-
-## 7. Conclusion
+## Conclusion
 
 The project successfully meets all requirements:
-- ✅ Database setup with Sakila films table
-- ✅ Validation of client parameters (field count, datatype, field values)
-- ✅ RESTful API documentation with 10+ endpoints
-- ✅ OpenAPI 3 with Swagger UI for interactive testing
-- ✅ Sample data provided for all APIs
-
-The application is ready for use and further development.
+- Database setup with Sakila films table
+- Validation of client parameters (field count, datatype, field values)
+- RESTful API documentation with 10+ endpoints
+- OpenAPI 3 with Swagger UI for interactive testing
+- Sample data provided for all APIs
 
 ---
 
