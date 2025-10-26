@@ -41,18 +41,27 @@ public class LoggingInterceptor implements HandlerInterceptor {
             String clientIp = getClientIp(request);
             String userAgent = request.getHeader("User-Agent");
             
-            // Log to file
-            log.info("API Request - Method: {}, URI: {}, Status: {}, Execution Time: {}ms", 
-                    method, uri, statusCode, executionTime);
+            // Get API key and client info if available
+            String apiKey = request.getHeader("X-API-Key");
+            Object apiClientObj = request.getAttribute("apiClient");
+            String clientName = "UNKNOWN";
+            if (apiClientObj instanceof com.web.restapidemo.entity.ApiClient) {
+                com.web.restapidemo.entity.ApiClient apiClient = (com.web.restapidemo.entity.ApiClient) apiClientObj;
+                clientName = apiClient.getClientName();
+            }
+            
+            // Log to file with client info
+            log.info("API Request - Client: {}, Method: {}, URI: {}, Status: {}, Execution Time: {}ms", 
+                    clientName, method, uri, statusCode, executionTime);
             
             // Save to database
             LogEntry logEntry = LogEntry.builder()
                     .timestamp(LocalDateTime.now())
                     .method(method)
                     .uri(uri)
-                    .requestBody("")  // For simplicity, skip body capture
+                    .requestBody(apiKey != null ? "API Key: " + apiKey.substring(0, Math.min(8, apiKey.length())) + "..." : "")
                     .responseStatus(statusCode)
-                    .responseBody("") // For simplicity, skip body capture
+                    .responseBody("")
                     .executionTimeMs(executionTime)
                     .clientIp(clientIp)
                     .userAgent(userAgent)
