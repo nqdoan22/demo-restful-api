@@ -42,8 +42,6 @@ This REST API Demo project manages the `film` table in the `sakila` database wit
 - `rentalRate`: Rental price
 - `replacementCost`: Replacement cost
 
----
-
 ### 3. Validation Client Parameters
 
 #### 3.1 Number of Fields
