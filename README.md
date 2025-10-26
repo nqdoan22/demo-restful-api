@@ -1,205 +1,232 @@
-# REST API Implementation Report - Film Management System
+# REST API Implementation Report - API Logging System
 
 ## Project Overview
-
-This REST API Demo project manages the `film` table in the `sakila` database with validation and api documentation
+A Spring Boot RESTful API for managing `film` and `actor` in the Sakila database with comprehensive request/response logging system.
 
 ## Technology Stack
 - **Java 21**
 - **Spring Boot 3.5.6**
 - **Spring Data JPA**
 - **MySQL Database**
-- **Jakarta Bean Validation**
-- **OpenAPI 3 + Swagger UI**
+- **Logback**
 - **Maven**
 - **Lombok**
 
-## Development Process
+## Implementation Details
 
-### 1. Add dependencies
+### Step 1: Logback Configuration (`logback-spring.xml`)
 
-**Configuration file (`pom.xml`):**
-```xml
-<!--        For validation -->
-<dependency>
-<groupId>org.springframework.boot</groupId>
-<artifactId>spring-boot-starter-validation</artifactId>
-</dependency>
+Created Logback configuration with:
+- Console appender for development
+- File appender with daily rotation and size-based rotation
+- Automatic compression of old logs
+- Separate appender for API request logs
 
-<!--        For api documentation-->
-<dependency>
-<groupId>org.springdoc</groupId>
-<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-<version>2.8.8</version>
-</dependency>
+### Step 2: LogEntry Entity
+
+**File:** `src/main/java/com/web/restapidemo/entity/LogEntry.java`
+
+Entity to store logs in database:
+- `id`: Primary key
+- `timestamp`: Request time
+- `method`: HTTP method
+- `uri`: Request URI with query params
+- `requestBody`: Request body content
+- `responseStatus`: HTTP status code
+- `responseBody`: Response body content
+- `executionTimeMs`: Processing time
+- `clientIp`: Client IP address
+- `userAgent`: Browser/client info
+
+### Step 3: LoggingInterceptor
+
+**File:** `src/main/java/com/web/restapidemo/interceptor/LoggingInterceptor.java`
+
+- Intercepts all HTTP requests/responses
+- Records execution time
+- Captures client IP and user agent
+- Saves logs to both file and database
+
+### Step 4: LogService
+
+**File:** `src/main/java/com/web/restapidemo/service/LogService.java`
+
+Service for log operations:
+- Save logs to database
+- Search logs by keyword
+- Find logs by date range
+- Find slow requests
+- Filter by method or status code
+
+### Step 5: LogController
+
+**File:** `src/main/java/com/web/restapidemo/controller/LogController.java`
+
+API endpoints for log searching:
+- `GET /api/logs/search?keyword=...` - Search by keyword
+- `GET /api/logs/date-range?startDate=...&endDate=...` - Filter by date
+- `GET /api/logs/slow-requests?thresholdMs=...` - Find slow requests
+- `GET /api/logs/method/{method}` - Filter by HTTP method
+- `GET /api/logs/status/{status}` - Filter by status code
+
+### Step 6: WebConfig
+
+**File:** `src/main/java/com/web/restapidemo/config/WebConfig.java`
+
+Registers LoggingInterceptor to capture all requests.
+
+## Logging Features
+
+### 1. Request/Response Logging
+- Logs all API requests and responses
+- Captures: method, URI, request/response body, status code, execution time
+- Records client IP and user agent
+
+### 2. Multiple Storage Options
+- **File Logging:** Logs saved to text files with rotation
+- **Database Logging:** Logs stored in `api_log` table
+
+### 3. Log Rotation
+- **Daily Rotation:** New log file each day
+- **Size-based Rotation:** When file reaches 10MB
+- **Automatic Compression:** Old logs compressed to .gz
+- **Retention:** Keeps 30 days of logs
+- **Total Size Cap:** Maximum 1GB for all logs
+
+### 4. Log Search & Debugging
+- Search logs by keyword
+- Filter by date range
+- Find slow requests (>threshold)
+- Filter by HTTP method
+- Filter by response status code
+
+## How to Use Logging Features
+
+### View Log Files
+```bash
+# Application logs
+tail -f logs/api-logs.log
+
+# API request logs
+tail -f logs/api-requests.log
+
+# View rotated logs
+ls logs/
 ```
 
-### 2. Key Entity Fields (from database):
-- `filmId`: Unique identifier
-- `title`: Film title (required, max 255 chars)
-- `releaseYear`: Year (1901-2155)
-- `rating`: Rating (G, PG, PG-13, R, NC-17)
-- `rentalRate`: Rental price
-- `replacementCost`: Replacement cost
+### Search Logs via API
 
-### 3. Validation Client Parameters
-
-#### 3.1 Number of Fields
-
-All required fields are validated using Jakarta Bean Validation annotations:
-- **Required fields:** `title`, `languageId`, `rentalDuration`, `rentalRate`, `replacementCost`
-- **Optional fields:** `description`, `releaseYear`, `length`, `rating`
-
-#### 3.2 DataType Validation
-
-Accurate mapping between Java types and MySQL types is maintained:
-
-| Java Type | MySQL Type |
-|-----------|------------|
-| Integer | SMALLINT, YEAR, TINYINT |
-| String | VARCHAR(255), TEXT |
-| BigDecimal | DECIMAL(4,2) |
-| LocalDateTime | DATETIME |
-
-#### 3.3 Field Values Validation
-
-**Examples of validation rules:**
-
-```java
-// Title validation
-@NotBlank(message = "Title is mandatory")
-@Size(max = 255, message = "Title must not exceed 255 characters")
-private String title;
-
-// Release year validation
-@Min(value = 1901, message = "Release year must be at least 1901")
-@Max(value = 2155, message = "Release year must not exceed 2155")
-private Integer releaseYear;
-
-// Rating validation
-@Pattern(regexp = "^(G|PG|PG-13|R|NC-17)?$", message = "Rating must be one of: G, PG, PG-13, R, NC-17")
-private String rating;
-
-// Rental rate validation
-@NotNull(message = "Rental rate is mandatory")
-@DecimalMin(value = "0.0", inclusive = false, message = "Rental rate must be greater than 0")
-@Digits(integer = 2, fraction = 2, message = "Rental rate must have format nn.nn")
-private BigDecimal rentalRate;
+#### Search by Keyword
+```bash
+curl "http://localhost:8080/api/logs/search?keyword=matrix"
 ```
 
-#### 3.4 Error Handling
-
-Global exception handler catches validation errors and returns detailed messages:
-
-**Example Error Response:**
-```json
-{
-  "title": "Title is mandatory",
-  "rating": "Rating must be one of: G, PG, PG-13, R, NC-17"
-}
+#### Filter by Date Range
+```bash
+curl "http://localhost:8080/api/logs/date-range?startDate=2024-10-01T00:00:00&endDate=2024-10-31T23:59:59"
 ```
 
-### 4. OpenAPI 3 + Swagger UI
-
-#### Configuration
-- Title: Sakila Film Management API
-- Version: 1.0
-- Swagger UI URL: `http://localhost:8080/swagger-ui.html`
-- API Docs URL: `http://localhost:8080/api-docs`
-
-#### Features
-
-1. **Interactive API Testing:** Test all APIs directly in browser (similar to Postman)
-2. **API Descriptions:** Each endpoint has detailed descriptions with examples
-3. **Parameter Documentation:** All parameters documented with descriptions and examples
-4. **Sample Data:** Pre-filled example data for easy testing
-5. **Schema Documentation:** Complete data model documentation
-
-#### How to Use Swagger UI
-
-1. Start the application
-2. Navigate to `http://localhost:8080/swagger-ui.html`
-3. Expand any API endpoint
-4. Click "Try it out" button
-5. Fill parameters or use example data
-6. Click "Execute" to test
-7. View response with status code and data
-
-### 5. RESTful API Documentation (10+ APIs)
-
-#### Basic CRUD Operations:
-1. **GET** `/api/films` - Get all films
-2. **GET** `/api/films/{id}` - Get film by ID
-3. **POST** `/api/films` - Create new film
-4. **PUT** `/api/films/{id}` - Update film
-5. **DELETE** `/api/films/{id}` - Delete film
-
-#### Search & Filter Operations:
-6. **GET** `/api/films/search?title={title}` - Search by title
-7. **GET** `/api/films/rating/{rating}` - Filter by rating
-8. **GET** `/api/films/year/{year}` - Filter by release year
-9. **GET** `/api/films/rental-range?minRate={min}&maxRate={max}` - Filter by price range
-10. **GET** `/api/films/long-films?minLength={length}` - Filter by film length
-
-## Sample Request & Response
-
-**Create Film Request:**
-```json
-{
-    "title": "The Matrix",
-    "description": "A computer hacker learns about reality",
-    "releaseYear": 1999,
-    "languageId": 1,
-    "rentalDuration": 3,
-    "rentalRate": 4.99,
-    "length": 136,
-    "replacementCost": 19.99,
-    "rating": "R"
-}
+#### Find Slow Requests
+```bash
+curl "http://localhost:8080/api/logs/slow-requests?thresholdMs=1000"
 ```
 
-**Response:**
-```json
-{
-    "filmId": 1,
-    "title": "The Matrix",
-    "releaseYear": 1999,
-    "rentalRate": 4.99,
-    "rating": "R",
-    ...
-}
+#### Filter by Method
+```bash
+curl http://localhost:8080/api/logs/method/GET
 ```
 
+#### Filter by Status Code
+```bash
+curl http://localhost:8080/api/logs/status/200
+```
 
-## Key Features
- 
-- **Validation:** Complete client parameter validation (number, datatype, field values)  
-- **10+ APIs:** Full CRUD operations plus search/filter capabilities  
-- **API Documentation:** Complete OpenAPI 3 specification with Swagger UI  
-- **Interactive Testing:** Built-in UI for testing APIs (similar to Postman)  
-- **Error Handling:** Global exception handler with detailed error messages  
-- **Sample Data:** Comprehensive examples for request and response
+### Database Query Examples
+
+```sql
+-- View all logs
+SELECT * FROM api_logs ORDER BY timestamp DESC;
+
+-- Find errors
+SELECT * FROM api_logs WHERE response_status >= 400;
+
+-- Find slow requests
+SELECT * FROM api_logs WHERE execution_time_ms > 1000;
+
+-- Search logs
+SELECT * FROM api_logs WHERE uri LIKE '%actor%';
+```
+
+## Log Rotation Strategy
+
+The system implements multiple rotation strategies:
+
+1. **Daily Rotation:** New log file each day (e.g., `api-logs-2024-10-24.0.log.gz`)
+2. **Size-based Rotation:** When file reaches 10MB, a new index is created (e.g., `.1.log`, `.2.log`)
+3. **Auto-compression:** Old logs automatically compressed to `.gz`
+4. **Retention:** Keeps last 30 days of logs
+5. **Total Size Cap:** Maximum 1GB total size for all log files
+
+**Example log files:**
+```
+logs/
+├── api-logs.log (current)
+├── api-logs-2024-10-23.0.log.gz
+├── api-logs-2024-10-23.1.log.gz
+├── api-requests.log (current)
+└── api-requests-2024-10-23.0.log.gz
+```
+
+## Testing the Logging System
+
+1. **Make API requests:**
+   ```bash
+   curl http://localhost:8080/api/actors
+   curl http://localhost:8080/api/films
+   ```
+
+2. **Check logs:**
+   ```bash
+   tail -f logs/api-logs.log
+   tail -f logs/api-requests.log
+   ```
+
+3. **Search in database:**
+    - Access MySQL: `mysql -u root -p sakila`
+    - Query logs: `SELECT * FROM api_logs ORDER BY timestamp DESC LIMIT 10;`
+
+4. **Use search APIs:**
+   ```bash
+   curl http://localhost:8080/api/logs/search?keyword=actor
+   ```
+
+## Project Structure
+
+```
+rest-api-demo/
+├── src/main/java/com/web/restapidemo/
+│   ├── config/
+│   │   └── WebConfig.java           # Register interceptor
+│   ├── controller/
+│   │   └── LogController.java       # Log search API
+│   ├── entity/
+│   │   └── LogEntry.java            # Log entity
+│   ├── interceptor/
+│   │   └── LoggingInterceptor.java  # Capture requests
+│   ├── repository/
+│   │   └── LogEntryRepository.java  # Log queries
+│   └── service/
+│       └── LogService.java           # Log business logic
+├── src/main/resources/
+│   └── logback-spring.xml            # Log configuration
+└── README.md
+```
 
 ## Conclusion
 
-The project successfully meets all requirements:
-- Database setup with Sakila films table
-- Validation of client parameters (field count, datatype, field values)
-- RESTful API documentation with 10+ endpoints
-- OpenAPI 3 with Swagger UI for interactive testing
-- Sample data provided for all APIs
-
----
-
-## How to Run
-
-```bash
-# Build project
-mvn clean install
-
-# Run application
-mvn spring-boot:run
-
-# Access Swagger UI
-http://localhost:8080/swagger-ui.html
-```
+Successfully implemented comprehensive logging system:
+- Logs all API requests and responses
+- Saves to both file and database
+- Automatic log rotation (daily and size-based)
+- Search and debugging capabilities
+- Multiple filter options (keyword, date, method, status, performance)
